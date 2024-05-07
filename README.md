@@ -1,5 +1,5 @@
 # 프로젝트명
-<img src="" width="100" height="100"/>
+<img src="/image/title.jpg" width="100" height="100"/>
 
 # IoT 
 > **한경대학교 컴퓨터공학과 소프트웨어융합 학부생**
@@ -16,9 +16,9 @@
 4학년 IoT시스템 프로그래밍 프로젝트로 진행한 ~ 프로젝트입니다. 
 
 ## 기술스택 & 개발환경
-![C]()
+<img src="/image/c.png" width="100" height="100"/>
 
-![Linux]()             
+<img src="/image/linux.jpeg" width="100" height="100"/>         
 
 ## 다이어그램
 <img src="주소입력" width="300" height="300"/>
@@ -38,7 +38,3 @@
 * Code
   
 * doc
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 858f2c06c356469e238c4a13e3411b20570e804d
