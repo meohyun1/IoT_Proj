@@ -14,6 +14,9 @@
 
 ## 프로젝트 소개
 4학년 IoT시스템 프로그래밍 프로젝트로 진행한 Smart4412 타겟시스템을 이용한 Yacht Dice 프로젝트입니다. 
+- CLCD모듈에서 다양한 문장을 출력해줍니다. (Ex, Game Start, Player1 Turn, Roll a Dice)
+- Dip 스위치로 주사위 던지기와 홀드 기능을 사용할 수 있습니다.
+- 메모리 모듈를 이용해 Yacht Dice의 족보를 확인할 수 있고
 
 ## 기술스택 & 개발환경
 <img src="/image/c.png" width="100" height="100"/>
