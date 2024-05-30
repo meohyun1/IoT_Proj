@@ -90,17 +90,11 @@ int main() {
 
     //사용 족보 바이너리로 바꾸어서 플래그로 사용(0~4095) 사용시 1
     int score_category[2] = {0,0};
-    
-    if(clcds=open(clcd, O_RDWR) < 0 ){
-        printf("clcd open error\n");
-        exit(1);
-    }
 
-    //12라운드
-    int r;
-    int t;
+    int r; // round : 12라운드
+    int t; // 0: p1턴/ 1 : p2턴
     for(r=0;r<12;r++) {
-        for(t=0;t<2;t++) {//t = 0 : p1턴/ 1 : p2턴
+        for(t=0;t<2;t++) {
             set_lcd_bot(12+t);// P0 turn Roll
             score[t] += turn(score_category[t]);
 
@@ -123,7 +117,6 @@ int main() {
     else {
         set_lcd_bot(16);
     }
-    close(clcds);
     return 0;
 }
 
@@ -152,21 +145,23 @@ int turn(int category) {
     }
 
     while(1) {
-        //입력 및 주사위 굴리기
+        // 입력 및 주사위 굴리기
         while(1) {
-            usleep(10000); //0.01 초 쉬기
-            //TODO tactsw입력 tact_input으로
+            usleep(10000); // 0.01 초 쉬기
+            // TODO tactsw입력 tact_input으로
             read(tactsw, &tact_input, sizeof(tact_input));
-            if(!tact_input && roll_count < 3) { //tactsw 입력 없고 3번 이하로 굴렸을 때
+            // tactsw 입력 없고 3번 이하로 굴렸을 때
+            if(!tact_input && roll_count < 3) { 
                 read(dipsw, &dip_input, sizeof(dip_input));
-                if(dip_input & 128) {// 딥스위치 맨 오른쪽 올렸을 때
+                // 딥스위치 맨 오른쪽 올렸을 때
+                if(dip_input & 128) {
                     roll_calc_score(score);
                     roll_count++;
                     tact_input = 1;
                     break;
                 }
             }
-            //아직 한번도 주사위 안굴렸으면 점수출력X
+            // 아직 한번도 주사위 안굴렸으면 점수출력X
             else if(roll_count != 0) {
                 break;
             }
@@ -181,8 +176,8 @@ int turn(int category) {
             //사용한 족보는 다시 사용 못하도록
             set_turn_score(100);
             continue;
-        }
-        else{
+        } 
+        else {
             //TODO lcd 족보 이름출력
             set_lcd_bot(tact_input-1);
             set_turn_score(score[tact_input]);
@@ -196,12 +191,12 @@ int turn(int category) {
     close(fnds);
 }
 
-int roll_calc_score(int*score){
+int roll_calc_score(int*score) {
     int dice[5] = {0,0,0,0,0};
     unsigned char hold;
     read(dipsw, &hold, sizeof(hold));
     int i, j;
-    for(i=0;i<5;i++){
+    for(i = 0; i < 5; i++) {
         if(!(hold & (1<<(i+3)))){
             dice[i] = rand()%6+1;
         }
@@ -211,7 +206,7 @@ int roll_calc_score(int*score){
     int counts[7] = {0}; 
     for(i=1;i<7;i++){
         int cnt = 0;
-        for(j=0;j<5;j++){
+    	for(j=0;j<5;j++){
             if(dice[j]==i){
                 cnt++;
             }
@@ -228,7 +223,8 @@ int roll_calc_score(int*score){
     }
     if (three_of_a_kind && pair) {
         score[7] = 25; // Full House 점수는 25점으로 가정
-    } else {
+    } 
+	else {
         score[7] = 0;
     }
 
@@ -279,7 +275,7 @@ int roll_calc_score(int*score){
         if(!(dip_input & 1)) {
             break;
         }
-        set_dice(fake_dice);
+        //set_dice(fake_dice);
         usleep(100000); //0.1 초 쉬기
     }
     set_dice(dice);
@@ -319,9 +315,15 @@ void set_roll_cnt(char roll_cnt){
 }
 
 void set_lcd_bot(int line) {
+    
+    if((clcds=open(clcd, O_RDWR)) < 0 ){
+        printf("clcd open error\n");
+        exit(1);
+    }
     char buffer[33];  // 32글자를 위한 버퍼
-    snprintf(buffer, sizeof(buffer), "%s%s", clcd_top, clcd_bot[line]);
-    write(clcds,&buffer, strlen(buffer));
+    snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);
+    write(clcds, buffer, 32);
+    close(clcds);
     return;
 }
 
