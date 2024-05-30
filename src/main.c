@@ -142,11 +142,11 @@ int turn(int category) {
         printf("dip open error\n");
         exit(1);
     }
-    if(dot_mtx=open(dot, O_RDWR) < 0 ){
+    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
         printf("dot open error\n");
         exit(1);
     }
-    if(fnds=open(fnd, O_RDWR) < 0 ){
+    if((fnds = open(fnd, O_RDWR)) < 0 ){
         printf("fnd open error\n");
         exit(1);
     }
@@ -159,7 +159,7 @@ int turn(int category) {
             read(tactsw, &tact_input, sizeof(tact_input));
             if(!tact_input && roll_count < 3) { //tactsw 입력 없고 3번 이하로 굴렸을 때
                 read(dipsw, &dip_input, sizeof(dip_input));
-                if(dip_input & 1=128) {// 딥스위치 맨 오른쪽 올렸을 때
+                if(dip_input & 128) {// 딥스위치 맨 오른쪽 올렸을 때
                     roll_calc_score(score);
                     roll_count++;
                     tact_input = 1;
