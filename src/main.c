@@ -32,7 +32,7 @@ int dot_mtx;
 int clcds;
 int fnds;
 
-char fnd_output[15] = {
+unsigned char fnd_output[15] = {
     0b00111111, // 0
     0b00000110, // 1
     0b01011011, // 2
@@ -49,7 +49,7 @@ char fnd_output[15] = {
     0b01111001, // E
     0b01011110 // d
 };
-char dot_buffer[8] = {
+unsigned char dot_buffer[8] = {
     0b00000000,
     0b00000000,
     0b00000000,
@@ -90,6 +90,11 @@ int main() {
 
     //사용 족보 바이너리로 바꾸어서 플래그로 사용(0~4095) 사용시 1
     int score_category[2] = {0,0};
+    
+    if(clcds=open(clcd, O_RDWR) < 0 ){
+        printf("clcd open error\n");
+        exit(1);
+    }
 
     //12라운드
     int r;
@@ -118,6 +123,7 @@ int main() {
     else {
         set_lcd_bot(16);
     }
+    close(clcds);
     return 0;
 }
 
@@ -129,14 +135,21 @@ int turn(int category) {
     int before_input = 0;
 
     if((tactsw = open( tact, O_RDWR )) < 0){
-        printf("tact open error");
+        printf("tact open error\n");
         exit(1);
     }
     if((dipsw = open( dip, O_RDWR )) < 0){
-        printf("dip open error");
+        printf("dip open error\n");
         exit(1);
     }
-
+    if(dot_mtx=open(dot, O_RDWR) < 0 ){
+        printf("dot open error\n");
+        exit(1);
+    }
+    if(fnds=open(fnd, O_RDWR) < 0 ){
+        printf("fnd open error\n");
+        exit(1);
+    }
 
     while(1) {
         //입력 및 주사위 굴리기
@@ -146,7 +159,7 @@ int turn(int category) {
             read(tactsw, &tact_input, sizeof(tact_input));
             if(!tact_input && roll_count < 3) { //tactsw 입력 없고 3번 이하로 굴렸을 때
                 read(dipsw, &dip_input, sizeof(dip_input));
-                if(dip_input & 1) {// 딥스위치 맨 오른쪽 올렸을 때
+                if(dip_input & 1=128) {// 딥스위치 맨 오른쪽 올렸을 때
                     roll_calc_score(score);
                     roll_count++;
                     tact_input = 1;
@@ -179,6 +192,8 @@ int turn(int category) {
     }
     close(tactsw);
     close(dipsw);
+    close(dot_mtx);
+    close(fnds);
 }
 
 int roll_calc_score(int*score){
@@ -282,13 +297,7 @@ void set_dice(int* dice) {
             }
         }
     }
-
-    if(dot_mtx=open(dot, O_RDWR)){
-        printf("dot open error");
-        exit(1);
-    }
     write(dot_mtx,&dot_buffer, sizeof(dot_buffer));
-    close(dot_mtx);
     return;
 }
 
@@ -305,26 +314,14 @@ void set_roll_cnt(char roll_cnt){
             dot_buffer[0] |= 0x01; // 0000 0001
             break;
     }
-
-    if(dot_mtx=open(dot, O_RDWR)){
-        printf("dot open error");
-        exit(1);
-    }
     write(dot_mtx,&dot_buffer, sizeof(dot_buffer));
-    close(dot_mtx);
     return;
 }
 
 void set_lcd_bot(int line) {
     char buffer[33];  // 32글자를 위한 버퍼
     snprintf(buffer, sizeof(buffer), "%s%s", clcd_top, clcd_bot[line]);
-
-    if(clcds=open(clcd, O_RDWR)){
-        printf("clcd open error");
-        exit(1);
-    }
-    write(clcds,&buffer, sizeof(buffer));
-    close(clcds);
+    write(clcds,&buffer, strlen(buffer));
     return;
 }
 
@@ -344,12 +341,6 @@ void set_turn_score(int score){
         buffer[2] = fnd_output[ones];
         buffer[3] = fnd_output[14];
     }
-
-    if(fnds=open(fnd, O_RDWR)){
-        printf("fnd open error");
-        exit(1);
-    }
     write(fnds, &buffer, sizeof(buffer));
-    close(fnds);
     return;
 }

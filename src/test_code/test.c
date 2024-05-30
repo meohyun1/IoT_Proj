@@ -18,7 +18,7 @@
 #define dip "/dev/dipsw"		// Dip Switch
 #define clcd "/dev/clcd"		// Character LCD
 
-void set_lcd_bot(int line);
+void set_dice(int* dice);
 
 int tactsw;
 int dipsw;
@@ -44,7 +44,7 @@ char fnd_output[15] = {
     0b01111001, // E
     0b01011110 // d
 };
-char dot_buffer[8] = {
+unsigned char dot_buffer[8] = {
     0b00000000,
     0b00000000,
     0b00000000,
@@ -78,19 +78,30 @@ char clcd_bot[17][17] = {
 };
 
 int main(){
-    set_lcd_bot(0);
+    int dice[5] ={1,2,3,4,5};
+    set_dice(dice);
     return 0;
 }
 
-void set_lcd_bot(int line) {
-    char buffer[33];  // 32글자를 위한 버퍼
-    snprintf(buffer, sizeof(buffer), "%s%s", clcd_top, clcd_bot[line]);
-
-    if(clcds=open(clcd, O_RDWR)){
-        printf("clcd open error");
+void set_dice(int* dice) {
+    int i, j;
+    for(i = 0; i < 5; i++){ // 열
+        for(j = 7; j > 1 ; j--){ // 행
+            if(8-j <= dice[i]){
+                dot_buffer[j] |= (128 >> i);  // 해당 비트를 켭니다.
+            } else {
+                dot_buffer[j] &= ~(128 >> i); // 해당 비트를 끕니다.
+            }
+        }
+    }
+    if(dot_mtx=open(dot, O_RDWR) < 0 ){
+        printf("dot open error\n");
         exit(1);
     }
-    write(clcds,&buffer, sizeof(buffer));
-    close(clcds);
+    printf("si");
+    write(dot_mtx,&dot_buffer, sizeof(dot_buffer));
+    printf("bal");
+    sleep(1);
+    close(dot_mtx);
     return;
 }

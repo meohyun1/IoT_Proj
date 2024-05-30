@@ -15,7 +15,7 @@ int main() {
 
 	write(dot_d,&c,sizeof(c)); 
 
-	sleep(1); 
 	close(dot_d); 
+	sleep(1);
 	return 0;
 }
