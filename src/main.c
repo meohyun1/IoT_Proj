@@ -1,8 +1,7 @@
 #include <stdio.h>          	// 입출력 관련 
 #include <stdlib.h>         	// 문자열 변환, 메모리 관련 
 #include <string.h>       	    // 문자열 처리 
-#include <time.h>         	    // 시간 관련 
-//#include <cstddef>
+#include <time.h>         	    // 시간 관련
 #include <stdbool.h>
 #include<unistd.h>       		// POSIX 운영체제 API에 대한 액세스 제공 
 #include<fcntl.h>			// 타겟시스템 입출력 장치 관련 
@@ -26,11 +25,8 @@ void set_turn_score(int score);
 int turn(int);
 int roll_calc_score(int*);
 
-// 전역 변수
-// 입력장치
 int tactsw;
 int dipsw;
-// 출력장치
 int leds;
 int dot_mtx;
 int clcds;
@@ -335,12 +331,18 @@ void set_lcd_bot(int line) {
 void set_turn_score(int score){
     char buffer[5];
     if(score>50){//턴당 점수 50 이상 불가능 USEd에 사용
-        char buffer[5] = {fnd_output[10],fnd_output[11],fnd_output[12],fnd_output[13]};
+        buffer[0] = fnd_output[10];
+        buffer[1] = fnd_output[11];
+        buffer[2] = fnd_output[12];
+        buffer[3] = fnd_output[13];
     }
     else{
         int tens = (score / 10) % 10;
         int ones = score % 10;
-        char buffer[5] = {fnd_output[14],fnd_output[tens],fnd_output[ones],fnd_output[14]};
+        buffer[0] = fnd_output[14];
+        buffer[1] = fnd_output[tens];
+        buffer[2] = fnd_output[ones];
+        buffer[3] = fnd_output[14];
     }
 
     if(fnds=open(fnd, O_RDWR)){
