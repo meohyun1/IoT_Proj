@@ -6,7 +6,16 @@
 
 int main() { 
 	int dot_d, i; 
-	unsigned char c[8] = {0x80,0x80,0x00,0x00,0x00,0x00,0x00,0x00}; 
+	unsigned char c[8] = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00010000,
+    0b00100000,
+    0b01000000,
+    0b10000000
+};
 
 	if((dot_d = open(dot, O_RDWR)) < 0) {  
 		printf("Can't Open\n");  
