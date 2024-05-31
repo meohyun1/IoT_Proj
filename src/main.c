@@ -237,8 +237,9 @@ void roll_dice(int* dice) {
 
 int calc_score(int* score, int* dice) { 
     // 1부터 6까지의 주사위 눈의 빈도를 저장하기 위한 배열, 0번 인덱스는 사용하지 않음
-    int i,j;
-    int counts[7] = {0}; 
+    int counts[7] = {0};
+    int i, j;
+
     for(i = 1;i < 7; i++) {
         int cnt = 0;
 
@@ -305,6 +306,7 @@ int calc_score(int* score, int* dice) {
             score[12] = 50; // Yacht 점수는 50점
         }
     }
+    return;
 }
 
 void set_dice(int* dice) {
