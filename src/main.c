@@ -18,11 +18,11 @@
 #define dip "/dev/dipsw"		// Dip Switch
 #define clcd "/dev/clcd"		// Character LCD
 
-void set_dice(int* dice);
-void set_roll_cnt(char roll_cnt);
-void set_lcd_bot(int line);
-void set_turn_score(int score);
-void roll_dice()
+void set_dice(int*);
+void set_roll_cnt(char);
+void set_lcd_bot(int);
+void set_turn_score(int);
+void roll_dice(int*)
 int turn(int);
 int roll_calc_score(int*);
 
@@ -148,6 +148,8 @@ int turn(int category) {
     unsigned char dip_input = 0;
     unsigned char tact_input = 0;
     unsigned char before_input = -1;
+    int dice[5] = {0, 0, 0, 0, 0};
+
     while(1) {
         while(1) {
             usleep(10000); // 0.01 초 쉬기
@@ -161,7 +163,8 @@ int turn(int category) {
                 read(dipsw, &dip_input, sizeof(dip_input));
                 // 딥스위치 맨 오른쪽 올렸을 때
                 if(dip_input & 128) {
-                    roll_calc_score(score);
+                    roll_dice(dice)
+                    calc_score(score);
                     set_lcd_bot(17);
                     roll_count++;
                     // tact_input = 1;
@@ -204,12 +207,7 @@ int turn(int category) {
         }
     }
 }
-int roll(int* dice) {
-
-}
-
-int calc_score(int* score) { 
-    int dice[5] = {0, 0, 0, 0, 0};
+void roll_dice(int* dice) {
     unsigned char hold;
     read(dipsw, &hold, sizeof(hold));
 
@@ -220,6 +218,29 @@ int calc_score(int* score) {
             dice[i] = rand() % 6 + 1;
         }
     }
+    unsigned char dip_input;
+    // int fake_dice[5] = {0,0,0,0,0};
+
+    while(1) {
+    //     for(i = 0; i < 5; i++) {
+    //         if(!(hold & (1 << (i + 3)))) {
+    //             dice[i] = rand() % 6 + 1;
+    //         }
+    //     }
+        read(dipsw, &dip_input, sizeof(dip_input));
+        // 딥스위치 맨 오른쪽 내렸을때
+        if(!(dip_input & 128)) {
+            break;
+        }
+    //     //set_dice(fake_dice);
+        usleep(100000); //0.1 초 쉬기
+    }
+    set_dice(dice);
+    sleep(2);
+
+}
+
+int calc_score(int* score) { 
     // 1부터 6까지의 주사위 눈의 빈도를 저장하기 위한 배열, 0번 인덱스는 사용하지 않음
     int counts[7] = {0}; 
     for(i = 1;i < 7; i++) {
@@ -288,28 +309,6 @@ int calc_score(int* score) {
             score[12] = 50; // Yacht 점수는 50점
         }
     }
-
-    
-    
-    unsigned char dip_input;
-    // int fake_dice[5] = {0,0,0,0,0};
-
-    while(1) {
-    //     for(i = 0; i < 5; i++) {
-    //         if(!(hold & (1 << (i + 3)))) {
-    //             dice[i] = rand() % 6 + 1;
-    //         }
-    //     }
-        read(dipsw, &dip_input, sizeof(dip_input));
-        // 딥스위치 맨 오른쪽 내렸을때
-        if(!(dip_input & 128)) {
-            break;
-        }
-    //     //set_dice(fake_dice);
-        usleep(100000); //0.1 초 쉬기
-    }
-    set_dice(dice);
-    sleep(2);
 }
 
 void set_dice(int* dice) {
