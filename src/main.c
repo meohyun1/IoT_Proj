@@ -22,6 +22,7 @@ void set_dice(int* dice);
 void set_roll_cnt(char roll_cnt);
 void set_lcd_bot(int line);
 void set_turn_score(int score);
+void roll_dice()
 int turn(int);
 int roll_calc_score(int*);
 
@@ -33,21 +34,21 @@ int clcds;
 int fnds;
 
 unsigned char fnd_output[15] = {
-    0b00111111, // 0
-    0b00000110, // 1
-    0b01011011, // 2
-    0b01001111, // 3
-    0b01100110, // 4
-    0b01101101, // 5
-    0b01111101, // 6
-    0b00000111, // 7
-    0b01111111, // 8
-    0b01101111, // 9
-    0b00000000, //출력 없음
-    0b00111110, // U
-    0b01101101, // S
-    0b01111001, // E
-    0b01011110  // d
+    0b11000000, // 0
+    0b11111001, // 1
+    0b10100100, // 2
+    0b10110000, // 3
+    0b10011001, // 4
+    0b10010010, // 5
+    0b10000010, // 6
+    0b11111000, // 7
+    0b10000000, // 8
+    0b10010000, // 9
+    0b11000001, // U
+    0b10010010, // S
+    0b10000110, // E
+    0b10100001, // d
+    0b11111111 //출력 없음
 };
 unsigned char dot_buffer[8] = {
     0b00000000,
@@ -97,7 +98,10 @@ int main() {
         exit(1);
     }
     
-
+    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
+        printf("dot open error\n");
+        exit(1);
+    }
 
     // 합산 스코어
     int score[2] = {0, 0};
@@ -134,6 +138,7 @@ int main() {
     
     close(tactsw);
     close(dipsw);
+    close(dot_mtx);
     return 0;
 }
 
@@ -147,6 +152,10 @@ int turn(int category) {
         while(1) {
             usleep(10000); // 0.01 초 쉬기
             read(tactsw, &tact_input, sizeof(tact_input));
+            while(tact_input){
+                usleep(10000); // 0.01 초 쉬기
+            }
+
             // tactsw 입력 없고 3번 이하로 굴렸을 때
             if(!tact_input && roll_count < 3) {
                 read(dipsw, &dip_input, sizeof(dip_input));
@@ -155,7 +164,11 @@ int turn(int category) {
                     roll_calc_score(score);
                     set_lcd_bot(17);
                     roll_count++;
-                    tact_input = 1;
+                    // tact_input = 1;
+
+
+                    //여기에 딥스위치 맨 오른쪽 내렸을 때 코드
+
                     continue;
                 }
             }
@@ -191,8 +204,11 @@ int turn(int category) {
         }
     }
 }
+int roll(int* dice) {
 
-int roll_calc_score(int* score) { 
+}
+
+int calc_score(int* score) { 
     int dice[5] = {0, 0, 0, 0, 0};
     unsigned char hold;
     read(dipsw, &hold, sizeof(hold));
@@ -213,8 +229,9 @@ int roll_calc_score(int* score) {
             if(dice[j] == i) {
                 cnt++;
             }
-            counts[dice[i]]++; // 주사위 빈도 계산
+            //counts[dice[i]]++; // 주사위 빈도 계산
         }
+        counts[i] = cnt;
         score[i]=cnt*i;//ones ~ sixs
     }
 
@@ -273,36 +290,29 @@ int roll_calc_score(int* score) {
     }
 
     
-    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
-        printf("dot open error\n");
-        exit(1);
-    }
     
-    // unsigned char dip_input;
+    unsigned char dip_input;
     // int fake_dice[5] = {0,0,0,0,0};
 
-    // while(1) {
+    while(1) {
     //     for(i = 0; i < 5; i++) {
     //         if(!(hold & (1 << (i + 3)))) {
     //             dice[i] = rand() % 6 + 1;
     //         }
     //     }
-    //     read(dipsw, &dip_input, sizeof(dip_input));
-    //     // 딥스위치 맨 오른쪽 내렸을때
-    //     if(!(dip_input & 128)) {
-    //         break;
-    //     }
+        read(dipsw, &dip_input, sizeof(dip_input));
+        // 딥스위치 맨 오른쪽 내렸을때
+        if(!(dip_input & 128)) {
+            break;
+        }
     //     //set_dice(fake_dice);
-    //     usleep(100000); //0.1 초 쉬기
-    // }
+        usleep(100000); //0.1 초 쉬기
+    }
     set_dice(dice);
-
-    close(dot_mtx);
-
+    sleep(2);
 }
 
 void set_dice(int* dice) {
-
     int i, j;
 
     // 열
@@ -323,11 +333,6 @@ void set_dice(int* dice) {
 }
 
 void set_roll_cnt(char roll_cnt) {
-    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
-        printf("dot open error\n");
-        exit(1);
-    }
-
     dot_buffer[0] &= 0x00;
     switch (roll_cnt) {
         case 3:
@@ -342,7 +347,6 @@ void set_roll_cnt(char roll_cnt) {
     }
 
     write(dot_mtx,&dot_buffer, sizeof(dot_buffer));
-    close(dot_mtx);
     return;
 }
 
@@ -352,24 +356,22 @@ void set_lcd_bot(int line) {
         exit(1);
     }
 
-    
-
     char buffer[33];  // 32글자를 위한 버퍼
     snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);
 
     write(clcds, buffer, 32);
-
+    sleep(5);
     close(clcds);
     return;
 }
 
 void set_turn_score(int score) {
-    if((fnds = open(fnd, O_RDWR)) < 0 ){
+    if((fnds = open(fnd, O_RDWR)) < 0 ) {
         printf("fnd open error\n");
         exit(1);
     }
 
-    char buffer[5];
+    unsigned char buffer[4];
 
     //턴당 점수 50 이상 불가능 USEd에 사용
     if(score>50) {
@@ -388,6 +390,7 @@ void set_turn_score(int score) {
     }
 
     write(fnds, &buffer, sizeof(buffer));
+    sleep(1);
     close(fnds);
     return;
 }
