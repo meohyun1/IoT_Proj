@@ -62,7 +62,7 @@ unsigned char dot_buffer[8] = {
 char clcd_top[17] = {
     " P1 000  P2 000 "
 };
-char clcd_bot[17][17] = {
+char clcd_bot[18][17] = {
     "      Ones      ",
     "      Twos      ",
     "     Threes     ",
@@ -79,7 +79,8 @@ char clcd_bot[17][17] = {
     "  P2 turn Roll  ",
     "    P1 win!!    ",
     "    P2 win!!    ",
-    "      draw      "
+    "      draw      ",
+    "  pick or roll  "
 };
 
 int main() {
@@ -92,8 +93,10 @@ int main() {
 
     if((dipsw = open( dip, O_RDWR )) < 0){
         printf("dip open error\n");
+        close(tactsw);
         exit(1);
     }
+    
 
 
     // 합산 스코어
@@ -108,7 +111,7 @@ int main() {
             // P0 turn Roll
             set_lcd_bot(12 + t);
             score[t] += turn(score_category[t]);
-            printf("%d\n",__LINE__);
+            
             // clcd 윗줄 수정
             clcd_top[4 + t * 8] = (score[t] / 100) + '0';
             clcd_top[5 + t * 8] = (score[t] / 10 % 10) + '0';
@@ -134,43 +137,44 @@ int main() {
     return 0;
 }
 
-int turn(int category) { printf("%d\n",__LINE__);
+int turn(int category) { 
     int score[12] = {0};
     int roll_count = 0;
     unsigned char dip_input = 0;
     unsigned char tact_input = 0;
     unsigned char before_input = -1;
     while(1) {
-        usleep(10000); // 0.01 초 쉬기
-        read(tactsw, &tact_input, sizeof(tact_input));
-        // tactsw 입력 없고 3번 이하로 굴렸을 때
-        if(!tact_input && roll_count < 3) {
-            read(dipsw, &dip_input, sizeof(dip_input));
-            // 딥스위치 맨 오른쪽 올렸을 때
-            if(dip_input & 128) {
-                roll_calc_score(score);
-                roll_count++;
-                tact_input = 1;
-                continue;;
+        while(1) {
+            usleep(10000); // 0.01 초 쉬기
+            read(tactsw, &tact_input, sizeof(tact_input));
+            // tactsw 입력 없고 3번 이하로 굴렸을 때
+            if(!tact_input && roll_count < 3) {
+                read(dipsw, &dip_input, sizeof(dip_input));
+                // 딥스위치 맨 오른쪽 올렸을 때
+                if(dip_input & 128) {
+                    roll_calc_score(score);
+                    set_lcd_bot(17);
+                    roll_count++;
+                    tact_input = 1;
+                    continue;
+                }
+            }
+
+            // 입력 없을시 출력 없게
+            // 아직 한번도 주사위 안굴렸으면 점수출력X
+            if(roll_count == 0) {
+                continue;
+            }
+            // tact 입력 없으면 아래 표시 할 필요 없음
+            if(tact_input) {
+                break;
             }
         }
-
-        // 입력 없을시 출력 없게
-        // tact 입력 없으면 아래 표시 할 필요 없음
-        if(!tact_input) {
-            continue;
-        }
-        // 아직 한번도 주사위 안굴렸으면 점수출력X
-        else if(roll_count != 0) {
-            continue;;
-        }
-
-        printf("%d\n",__LINE__);
 
         // 점수 출력 부분
         if(tact_input != before_input) {
             set_lcd_bot(tact_input-1);
-            printf("%d\n",__LINE__);
+            
             if((1 << (tact_input - 1)) & category) {
                 set_turn_score(100);
             }
@@ -188,7 +192,7 @@ int turn(int category) { printf("%d\n",__LINE__);
     }
 }
 
-int roll_calc_score(int* score) { printf("%d\n",__LINE__);
+int roll_calc_score(int* score) { 
     int dice[5] = {0, 0, 0, 0, 0};
     unsigned char hold;
     read(dipsw, &hold, sizeof(hold));
@@ -267,33 +271,37 @@ int roll_calc_score(int* score) { printf("%d\n",__LINE__);
             score[12] = 50; // Yacht 점수는 50점
         }
     }
-    printf("%d\n",__LINE__);
-    unsigned char dip_input;
-    int fake_dice[5] = {0,0,0,0,0};
 
-    while(1) {
-        for(i = 0; i < 5; i++) {
-            if(!(hold & (1 << (i + 3)))) {
-                dice[i] = rand() % 6 + 1;
-            }
-        }
-        read(dipsw, &dip_input, sizeof(dip_input));
-        // 딥스위치 맨 오른쪽 내렸을때
-        if(!(dip_input & 128)) {
-            break;
-        }
-        set_dice(fake_dice);
-        usleep(100000); //0.1 초 쉬기
-    }
-    set_dice(dice);
-}
-
-void set_dice(int* dice) {
-    printf("%d\n",__LINE__);
+    
     if((dot_mtx = open(dot, O_RDWR)) < 0 ){
         printf("dot open error\n");
         exit(1);
     }
+    
+    // unsigned char dip_input;
+    // int fake_dice[5] = {0,0,0,0,0};
+
+    // while(1) {
+    //     for(i = 0; i < 5; i++) {
+    //         if(!(hold & (1 << (i + 3)))) {
+    //             dice[i] = rand() % 6 + 1;
+    //         }
+    //     }
+    //     read(dipsw, &dip_input, sizeof(dip_input));
+    //     // 딥스위치 맨 오른쪽 내렸을때
+    //     if(!(dip_input & 128)) {
+    //         break;
+    //     }
+    //     //set_dice(fake_dice);
+    //     usleep(100000); //0.1 초 쉬기
+    // }
+    set_dice(dice);
+
+    close(dot_mtx);
+
+}
+
+void set_dice(int* dice) {
 
     int i, j;
 
@@ -311,7 +319,6 @@ void set_dice(int* dice) {
     }
 
     write(dot_mtx, &dot_buffer, sizeof(dot_buffer));
-    close(dot_mtx);
     return;
 }
 
@@ -345,7 +352,7 @@ void set_lcd_bot(int line) {
         exit(1);
     }
 
-    printf("%d\n",__LINE__);
+    
 
     char buffer[33];  // 32글자를 위한 버퍼
     snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);

@@ -8,49 +8,54 @@
 
 
 
-#define clcd "/dev/clcd"
+#define dot "/dev/dot"			// Dot Matrix-
 
-
-char clcd_top[17] = {
-    " P1 000  P2 000 "
-};
-char clcd_bot[17][17] = {
-    "      Ones      ",
-    "      Twos      ",
-    "     Threes     ",
-    "      Fours     ",
-    "      Fives     ",
-    "      Sixes     ",
-    "   Full House   ",
-    " Four of a Kind ",
-    "Little Straight ",
-    "  Big Straight  ",
-    "     Choice     ",
-    "      Yacht     ",
-    "  P1 turn Roll  ",
-    "  P2 turn Roll  ",
-    "    P1 win!!    ",
-    "    P2 win!!    ",
-    "      draw      "
+unsigned char dot_buffer[8] = {
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000
 };
 
-void set_lcd_bot(int line) {
-    int clcds;
-    
-    if((clcds=open(clcd, O_RDWR)) < 0 ){
-        printf("clcd open error\n");
+int dot_mtx;
+
+void set_dice(int* dice) {
+    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
+        printf("dot open error\n");
         exit(1);
     }
-    char buffer[33];  // 32글자를 위한 버퍼
-    snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);
-    printf("\nthis is printf\n%s\n",buffer);
-    write(clcds, buffer, 32);
-    close(clcds);
+    
+    int i, j;
+
+    // 열
+    for(i = 0; i < 5; i++) { 
+        // 행
+        for(j = 7; j > 1 ; j--) {
+            if(8 - j <= dice[i]) {
+                dot_buffer[j] |= (128 >> i);  // 해당 비트를 켭니다.
+            } 
+            else {
+                dot_buffer[j] &= ~(128 >> i); // 해당 비트를 끕니다.
+            }
+        }
+    }
+    
+    write(dot_mtx, &dot_buffer, sizeof(dot_buffer));
+    close(dot_mtx);
     return;
 }
 
 int main()
 {
-  set_lcd_bot(1);
+    int d[5] = {1,2,3,4,5};
+    set_dice(d);
+    int i;
+    for(i = 0;i<8;i++){
+        printf("%x\n",dot_buffer[i]);
+    }
 	return 0;
 }
