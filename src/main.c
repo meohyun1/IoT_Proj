@@ -22,9 +22,9 @@ void set_dice(int*);
 void set_roll_cnt(char);
 void set_lcd_bot(int);
 void set_turn_score(int);
-void roll_dice(int*)
+void roll_dice(int*);
 int turn(int);
-int roll_calc_score(int*);
+int roll_calc_score(int*, int*);
 
 int tactsw;
 int dipsw;
@@ -163,15 +163,10 @@ int turn(int category) {
                 read(dipsw, &dip_input, sizeof(dip_input));
                 // 딥스위치 맨 오른쪽 올렸을 때
                 if(dip_input & 128) {
-                    roll_dice(dice)
-                    calc_score(score);
+                    roll_dice(dice);
+                    calc_score(score, dice);
                     set_lcd_bot(17);
                     roll_count++;
-                    // tact_input = 1;
-
-
-                    //여기에 딥스위치 맨 오른쪽 내렸을 때 코드
-
                     continue;
                 }
             }
@@ -240,8 +235,9 @@ void roll_dice(int* dice) {
 
 }
 
-int calc_score(int* score) { 
+int calc_score(int* score, int* dice) { 
     // 1부터 6까지의 주사위 눈의 빈도를 저장하기 위한 배열, 0번 인덱스는 사용하지 않음
+    int i,j;
     int counts[7] = {0}; 
     for(i = 1;i < 7; i++) {
         int cnt = 0;
@@ -359,7 +355,7 @@ void set_lcd_bot(int line) {
     snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);
 
     write(clcds, buffer, 32);
-    sleep(5);
+    printf("%s",buffer);
     close(clcds);
     return;
 }
