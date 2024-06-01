@@ -25,6 +25,7 @@ void set_turn_score(int);
 void roll_dice(int*);
 void calc_score(int*, int*);
 int turn(int*);
+void cleanup_resources();
 
 int tactsw;
 int dipsw;
@@ -86,6 +87,7 @@ char clcd_bot[18][17] = {
 
 int main() {
     srand(time(NULL));
+    atexit(cleanup_resources);
 
     if((tactsw = open( tact, O_RDWR )) < 0){
         printf("tact open error\n");
@@ -94,10 +96,24 @@ int main() {
 
     if((dipsw = open( dip, O_RDWR )) < 0){
         printf("dip open error\n");
-        close(tactsw);
         exit(1);
     }
 
+    if((clcds = open(clcd, O_RDWR)) < 0 ) {
+        printf("clcd open error\n");
+        exit(1);
+    }
+    
+    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
+        printf("dot open error\n");
+        exit(1);
+    }
+
+    if((fnds = open(fnd, O_RDWR)) < 0 ) {
+        printf("fnd open error\n");
+        exit(1);
+    }
+    
     // 합산 스코어
     int score[2] = {0, 0};
     //사용 족보 바이너리로 바꾸어서 플래그로 사용(0~4095) 사용시 1
@@ -133,14 +149,15 @@ int main() {
     
     close(tactsw);
     close(dipsw);
+    close(clcds);
+    close(dot_mtx);
+    close(fnds);
     return 0;
 }
 
 int turn(int* category) {
-    if((dot_mtx = open(dot, O_RDWR)) < 0 ){
-        printf("dot open error\n");
-        exit(1);
-    }
+    write(dot_mtx, &dot_buffer, sizeof(dot_buffer));
+    
 
     int score[12] = {0};
     int roll_count = 0;
@@ -166,6 +183,7 @@ int turn(int* category) {
         
         // 주사위 안굴렸으면 dip만 읽어야함
         if(roll_count == 0) continue;
+        usleep(10000); // 0.01 초 쉬기
 
         read(tactsw, &tact_input, sizeof(tact_input));
         // tact 누름
@@ -179,6 +197,7 @@ int turn(int* category) {
                 // 점수 출력 부분
                 if(tact_input != before_input) {
                     set_lcd_bot(tact_input-1);
+                    printf("[dot] %d %d %d %d %d\n",dice[0],dice[1],dice[2],dice[3],dice[4]);
                     
                     if((1 << (tact_input - 1)) & *category) {
                         set_turn_score(100);
@@ -192,7 +211,6 @@ int turn(int* category) {
                 else {
                     //TODO category에 사용한 족보 넣기
                     *category |= 1 << (tact_input - 1);
-                    close(dot_mtx);
                     return score[tact_input];
                 }
                 break;
@@ -338,27 +356,17 @@ void set_dice(int* dice) {
 // }
 
 void set_lcd_bot(int line) {
-    if((clcds = open(clcd, O_RDWR)) < 0 ) {
-        printf("clcd open error\n");
-        exit(1);
-    }
 
     char buffer[33];  // 32글자를 위한 버퍼
     snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);
 
     printf("[CLCD] %s\n",buffer);
     write(clcds, buffer, 32);
-    close(clcds);
     return;
 }
 
 void set_turn_score(int score) {
-    if((fnds = open(fnd, O_RDWR)) < 0 ) {
-        printf("fnd open error\n");
-        exit(1);
-    }
-
-    unsigned char buffer[4];
+    unsigned char buffer[5];
 
     //턴당 점수 50 이상 불가능 USEd에 사용
     if(score>50) {
@@ -378,6 +386,32 @@ void set_turn_score(int score) {
 
     write(fnds, &buffer, sizeof(buffer));
     printf("[fnd] %d\n",score);
-    close(fnds);
     return;
+}
+
+void cleanup_resources() {
+    if (tactsw > 0) {
+        close(tactsw);
+        printf("Tact switch file descriptor closed.\n");
+    }
+    if (dipsw > 0) {
+        close(dipsw);
+        printf("Dip switch file descriptor closed.\n");
+    }
+    if (leds > 0) {
+        close(leds);
+        printf("LED file descriptor closed.\n");
+    }
+    if (dot_mtx > 0) {
+        close(dot_mtx);
+        printf("Dot matrix file descriptor closed.\n");
+    }
+    if (clcds > 0) {
+        close(clcds);
+        printf("Character LCD file descriptor closed.\n");
+    }
+    if (fnds > 0) {
+        close(fnds);
+        printf("FND file descriptor closed.\n");
+    }
 }
