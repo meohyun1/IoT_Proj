@@ -358,15 +358,18 @@ void set_dice(int* dice) {
 void set_lcd_bot(int line) {
 
     char buffer[33];  // 32글자를 위한 버퍼
-    snprintf(buffer, 32, "%s%s", clcd_top, clcd_bot[line]);
+     snprintf(buffer, sizeof(buffer), "%s%s", clcd_top, clcd_bot[line]);
 
     printf("[CLCD] %s\n",buffer);
-    write(clcds, buffer, 32);
+    if (write(clcds, buffer, 32) != 32) {
+        perror("write error");
+    }
+    close(clcd_fd);
     return;
 }
 
 void set_turn_score(int score) {
-    unsigned char buffer[5];
+    unsigned char buffer[4];
 
     //턴당 점수 50 이상 불가능 USEd에 사용
     if(score>50) {
@@ -384,8 +387,11 @@ void set_turn_score(int score) {
         buffer[3] = fnd_output[14];
     }
 
-    write(fnds, &buffer, sizeof(buffer));
+    if (write(fnds, buffer, sizeof(buffer)) != sizeof(buffer)) {
+        perror("write error");
+    }
     printf("[fnd] %d\n",score);
+    close(fnds);
     return;
 }
 
