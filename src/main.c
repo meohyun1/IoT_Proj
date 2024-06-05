@@ -34,6 +34,8 @@ int dot_mtx;
 int clcds;
 int fnds;
 
+unsigned char led_state = 0xFF; // 8개의 LED가 모두 켜진 상태
+
 unsigned char fnd_output[15] = {
     0b11000000, // 0
     0b11111001, // 1
@@ -217,6 +219,29 @@ int turn(int* category) {
             }
         }
     }
+}
+void turn_off_next_led() {
+    int led_fd;
+
+    if (led_state == 0) {
+        printf("All LEDs are already off.\n");
+        return;
+    }
+
+    led_state = led_state >> 1;
+
+    if ((led_fd = open(led, O_RDWR)) < 0) {
+        perror("led open error");
+        exit(1);
+    }
+
+    ssize_t bytes_written = write(led_fd, &led_state, sizeof(led_state));
+    if (bytes_written != sizeof(led_state)) {
+        perror("write error");
+        printf("Expected to write %zu bytes, but wrote %zd bytes\n", sizeof(led_state), bytes_written);
+    }
+
+    close(led_fd);
 }
 
 void roll_dice(int* dice) {
